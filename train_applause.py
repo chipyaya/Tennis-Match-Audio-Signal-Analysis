@@ -1,5 +1,4 @@
 import os
-import pickle
 import librosa
 import numpy as np
 import pandas as pd
@@ -67,11 +66,6 @@ def calc_mean_std(X):
         means[window_start:window_start + 2*window_size] = mean
         std_devs[window_start:window_start + 2*window_size] = std
         window_start += 2*window_size
-
-    # with open('cached/means.pkl', 'wb') as f:
-    #     pickle.dump(means, f)
-    # with open('cached/std_devs.pkl', 'wb') as f:
-    #     pickle.dump(std_devs, f)
 
     return means, std_devs
 
