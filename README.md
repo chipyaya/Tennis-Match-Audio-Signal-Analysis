@@ -16,7 +16,7 @@ python3 gen_clips.py --audio_file data/audio/us-open-2019/us-open-2019.wav
 ## Load clips using pickle
 ```
 import pickle
-clips = pickle.load(open('results/clips-us-open-2019.p', 'rb'))
+clips = pickle.load(open('results/clips-us-open-2019-highlights.p', 'rb'))
 ```
 
 ## Structure of clips
