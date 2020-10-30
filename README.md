@@ -23,3 +23,14 @@ clips = pickle.load(open('results/clips-us-open-2019-highlights.p', 'rb'))
 - clips = [(start time 0, end time 0), (start time 1, end time 1), ..]
 - unit: second
 - e.g. clips = [(0, 7), (14, 22), (25, 48), (50, 61), (63, 98), (107, 117), (122, 125), (132, 161), (164, 168), (174, 180)]
+
+## Human detection
+Download the pretrained yolov3 weight to detect/
+```
+wget https://pjreddie.com/media/files/yolov3.weights
+```
+Usage:
+```
+python3 run.py --directory=../video2image/
+```
+This will generate a txt file for every image. Every line in the txt file is a detected human instance with four variables, which are the x, y, width, height for the bounding box.
