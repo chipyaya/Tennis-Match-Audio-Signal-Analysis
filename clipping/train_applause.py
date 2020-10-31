@@ -88,16 +88,16 @@ def initialize_ff_model():
 
 if __name__ == '__main__':
     applause_dirs = [
-        'data/applause-training-data/applause_pt1/',
-        'data/applause-training-data/applause_pt2/']
+        '../data/applause-training-data/applause_pt1/',
+        '../data/applause-training-data/applause_pt2/']
     non_applause_dirs = [
-        'data/applause-training-data/non_applause_pt1/',
-        'data/applause-training-data/non_applause_pt2/']
+        '../data/applause-training-data/non_applause_pt1/',
+        '../data/applause-training-data/non_applause_pt2/']
 
     applause_labels = read_labels(
-        'data/applause-training-data/PennSound_applause_labels.csv')
+        '../data/applause-training-data/PennSound_applause_labels.csv')
     non_applause_labels = read_labels(
-        'data/applause-training-data/PennSound_non_applause_labels.csv')
+        '../data/applause-training-data/PennSound_non_applause_labels.csv')
 
     applause_feats = extract_features_from_files(applause_dirs)
     applause_feats = [feat for feat in applause_feats if feat is not None]
