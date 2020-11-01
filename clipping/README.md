@@ -9,8 +9,8 @@ The intervals of applauses are detected by a pretrained model retrieved from htt
 
 ## Generate clips
 ```
-python3 gen_clips.py --audio_file data/audio/us-open-2019/us-open-2019.wav
-# clips dumped to results/clips-us-open-2019.p
+python3 gen_clips.py --audio_file ../data/audio/us-open-2019-highlights.wav
+# clips dumped to results/clips-us-open-2019-highlights.p
 ```
 
 ## Load clips using pickle
