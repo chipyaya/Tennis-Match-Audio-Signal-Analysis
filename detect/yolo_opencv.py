@@ -68,4 +68,4 @@ with open(output_name, 'w') as f:
         y = box[1]
         w = box[2]
         h = box[3]
-        f.write("{} {} {} {}\n".format(x, y, w, h))
+        f.write("{} {}\n".format(x+h, y+w/2))
