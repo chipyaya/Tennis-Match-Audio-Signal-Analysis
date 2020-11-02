@@ -1,6 +1,6 @@
 # WN-FPJ-UTCS
 # Automatic clips generation using audio features
-Our goal is to generate clips that do not contain audience applauses and commentator's speech.
+Our goal is to generate clips that do not contain audience applause and commentator's speech.
 
 To achieve this, we detect the start of each clip via signal volumes and assign the end of a clip to the start time of audience applauses.
 

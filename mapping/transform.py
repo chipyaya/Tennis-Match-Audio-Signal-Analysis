@@ -191,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--projected_dir', type=str, default='projected')
     parser.add_argument(
-        '--court_img', type=str, default='court/tennis-court.jpg')
+        '--court_img', type=str, default='court-plan/tennis-court-plan.jpg')
     args = parser.parse_args()
 
     court = cv2.imread(args.court_img)
