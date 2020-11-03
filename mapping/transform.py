@@ -5,8 +5,8 @@ import numpy as np
 import opencv_wrapper as cvw
 from sklearn.cluster import dbscan
 
-def make_out_dir(out_dir, dir_name, path):
-    path = os.path.join(out_dir, dir_name, path)
+def make_out_dir(out_dir, dir_name):
+    path = os.path.join(out_dir, dir_name)
     if not os.path.exists(path):
         os.makedirs(path)
     return path
@@ -126,7 +126,7 @@ def find_intersections(out_path, prefix, frame, line_pts):
         centers.append(total)
         cv2.circle(frame, (total[0], total[1]), 10, (255, 0, 0), -1)
     cv2.imwrite(os.path.join(out_path,
-        '{}-intersections.png'.format(prefix)), frame)
+        '{}-centers.png'.format(prefix)), frame)
     return centers
 
 def find_centers(out_path, prefix, frame):
@@ -168,7 +168,7 @@ def find_centers2(out_path, prefix, frame):
     for i, contour in enumerate(contours):
         centers.append([contour.center.x, contour.center.y])
         cvw.circle(frame, contour.center, 3, cvw.Color.RED, -1)
-    cv2.imwrite(os.path.join(out_path, '{}-intersections.png'.format(prefix)), frame)
+    cv2.imwrite(os.path.join(out_path, '{}-centers.png'.format(prefix)), frame)
     return centers
 
 def find_upper(centers):
@@ -188,12 +188,12 @@ def find_border_points(centers):
     return [upper_left, upper_right, lower_right, lower_left]
 
 def calc_transform_matrix(out_path, prefix, court, frame, border_points):
-    print('border_points:', border_points)
+    # print('border_points:', border_points)
     # the detected border points are the source
     src_points = np.array(border_points, np.float32)
     # define destination border points on the court court 
-    border_x_min, border_x_max = 25, 428
-    border_y_min, border_y_max = 27, 248
+    border_x_min, border_x_max = 125, 528
+    border_y_min, border_y_max = 37, 258
     dst_points = np.array([(border_x_min, border_y_max),
                            (border_x_min, border_y_min),
                            (border_x_max, border_y_min),
@@ -205,22 +205,32 @@ def calc_transform_matrix(out_path, prefix, court, frame, border_points):
     cv2.imwrite(os.path.join(out_path, '{}-warped.png'.format(prefix)), warped)
     return M
 
-def get_human_position(prefix):
-    file_name = '{}_human.txt'.format(prefix)
+def get_pos(dir_path, file_name):
+    with open(os.path.join(dir_path, file_name)) as f:
+        lines = [line.rstrip() for line in f]
+    pos = np.array([line.split(' ')[:2] for line in lines], dtype=np.float32)
+    return pos
 
-def get_ball_position(prefix):
-    file_name = '{}_ball.txt'.format(prefix)
+def isInCourtPlan(court, x, y):
+    x_max, y_max = court.shape[::-1][1:]
+    if x >= 0 and x <= x_max and y >= 0 and y <= y_max:
+        return True
+    return False
 
 def transform_and_project(court, M, p, color):
-    p = cv2.perspectiveTransform(M, p)
-    cv2.circle(court, p, 10, color, -1)
+    p_transformed = cv2.perspectiveTransform(p.reshape(1, 1, 2), M).reshape(-1)
+    x, y = p_transformed
+    if isInCourtPlan(court, x, y):
+        print('In plan: {} -> {}'.format(p, p_transformed))
+        cv2.circle(court, (x, y), 10, color, -1)
+    else:
+        print('Out of plan: {} -> {}'.format(p, p_transformed))
 
 def project(out_path, prefix, court, M, human_pos, ball_pos):
-    # for pos in human_pos:
-    #     transform_and_project(court, M, pos, (0, 0, 0))
+    for pos in human_pos:
+        transform_and_project(court, M, pos, (0, 0, 0))
     # transform_and_project(court, M, ball_pos, (255, 0, 0))
-    # cv2.imwrite(os.path.join(out_path, '{}-projected.png'.format(prefix)), court)
-    pass
+    cv2.imwrite(os.path.join(out_path, '{}-projected.png'.format(prefix)), court)
 
 
 if __name__ == '__main__':
@@ -230,16 +240,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--out_dir', type=str, default='results')
     parser.add_argument(
-        '--preprocessed_dir', type=str, default='preprocessed')
-    parser.add_argument(
-        '--projected_dir', type=str, default='projected')
-    parser.add_argument(
-        '--court_img', type=str, default='court-plan/tennis-court-plan.jpg')
+        '--court_img', type=str, default='court-plan/tennis-court-plan-padded.png')
     args = parser.parse_args()
 
-    court = cv2.imread(args.court_img)
     for i, dir_name in enumerate(os.listdir(args.frame_dir)):
         dir_path = os.path.join(args.frame_dir, dir_name)
+        out_path = make_out_dir(args.out_dir, dir_name)
         if not os.path.isdir(dir_path):
             continue
         for file_name in os.listdir(dir_path):
@@ -248,20 +254,19 @@ if __name__ == '__main__':
             if not os.path.isfile(file_path) or not file_name.endswith('.png'):
                 continue
             frame = cv2.imread(file_path)
-            preprocessed_dir = make_out_dir(
-                args.out_dir, dir_name, args.preprocessed_dir)
-            projected_dir = make_out_dir(
-                args.out_dir, dir_name, args.projected_dir)
+            # shape: (n_row, n_col, n_channel)
 
-            centers = find_centers(preprocessed_dir, prefix, frame)
-            # centers = find_centers2(preprocessed_dir, prefix, frame)
+            centers = find_centers(out_path, prefix, frame)
+            # centers = find_centers2(out_path, prefix, frame)
             if centers == None or len(centers) == 0:
                 print('{}: no intersection found'.format(file_path))
                 continue
             border_points = find_border_points(centers)
+            court = cv2.imread(args.court_img)
             M = calc_transform_matrix(
-                preprocessed_dir, prefix, court, frame, border_points)
-            human_pos = get_human_position(prefix)
-            ball_pos = get_ball_position(prefix)
-            project(projected_dir, prefix, court, M, human_pos, ball_pos)
+                out_path, prefix, court, frame, border_points)
+            human_pos = get_pos(dir_path, '{}_human.txt'.format(prefix))
+            ball_pos = None
+            # ball_pos = get_pos(dir_path, '{}_ball.txt'.format(prefix))
+            project(out_path, prefix, court, M, human_pos, ball_pos)
             print('{}: projected'.format(file_path))
