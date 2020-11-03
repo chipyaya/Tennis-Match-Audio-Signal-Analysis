@@ -5,3 +5,4 @@ sklearn
 librosa
 numpy
 pandas
+opencv-wrapper

@@ -2,8 +2,8 @@ import os
 import cv2
 import argparse
 import numpy as np
+import opencv_wrapper as cvw
 from sklearn.cluster import dbscan
-
 
 def make_out_dir(out_dir, dir_name, path):
     path = os.path.join(out_dir, dir_name, path)
@@ -129,6 +129,48 @@ def find_intersections(out_path, prefix, frame, line_pts):
         '{}-intersections.png'.format(prefix)), frame)
     return centers
 
+def find_centers(out_path, prefix, frame):
+    line_pts = detect_edges(out_path, prefix, frame)
+    if line_pts == None:
+        print('{}: no edges detected'.format(file_path))
+        return None
+    centers = find_intersections(
+        out_path, prefix, frame, line_pts)
+    return centers
+
+
+def find_centers2(out_path, prefix, frame):
+    frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    lower_blue = np.array([99, 105, 82], np.uint8)
+    upper_blue = np.array([121, 184, 225], np.uint8)
+    mask = cv2.inRange(frame_hsv, lower_blue, upper_blue)
+
+    fil = np.zeros(frame.shape[:2], np.uint8)
+    for i in range(70, 290):
+        if i < 180:
+            for j in range(150, 500):
+                fil[i, j] = 255
+        else:
+            for j in range(50, frame.shape[1]):
+                fil[i, j] = 255
+    mask = cv2.bitwise_and(mask, mask, mask=fil)
+    cv2.imwrite(os.path.join(out_path, '{}-mask.png'.format(prefix)), mask)
+    output = cv2.bitwise_and(frame, frame, mask=mask)
+
+    gray = cvw.bgr2gray(output)
+    corners = cv2.cornerHarris(gray, 9, 3, 0.01)
+    corners = cvw.normalize(corners).astype(np.uint8)
+    thresh = cvw.threshold_otsu(corners)
+    dilated = cvw.dilate(thresh, 3)
+
+    contours = cvw.find_external_contours(dilated)
+    centers = []
+    for i, contour in enumerate(contours):
+        centers.append([contour.center.x, contour.center.y])
+        cvw.circle(frame, contour.center, 3, cvw.Color.RED, -1)
+    cv2.imwrite(os.path.join(out_path, '{}-intersections.png'.format(prefix)), frame)
+    return centers
+
 def find_upper(centers):
     # print('centers:', centers)
     min_y = np.amin(np.array(centers), axis=0)[1]
@@ -146,7 +188,7 @@ def find_border_points(centers):
     return [upper_left, upper_right, lower_right, lower_left]
 
 def calc_transform_matrix(out_path, prefix, court, frame, border_points):
-    # print('border_points:', border_points)
+    print('border_points:', border_points)
     # the detected border points are the source
     src_points = np.array(border_points, np.float32)
     # define destination border points on the court court 
@@ -180,6 +222,7 @@ def project(out_path, prefix, court, M, human_pos, ball_pos):
     # cv2.imwrite(os.path.join(out_path, '{}-projected.png'.format(prefix)), court)
     pass
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -210,12 +253,8 @@ if __name__ == '__main__':
             projected_dir = make_out_dir(
                 args.out_dir, dir_name, args.projected_dir)
 
-            line_pts = detect_edges(preprocessed_dir, prefix, frame)
-            if line_pts == None:
-                print('{}: no edges detected'.format(file_path))
-                continue
-            centers = find_intersections(
-                preprocessed_dir, prefix, frame, line_pts)
+            centers = find_centers(preprocessed_dir, prefix, frame)
+            # centers = find_centers2(preprocessed_dir, prefix, frame)
             if centers == None or len(centers) == 0:
                 print('{}: no intersection found'.format(file_path))
                 continue
