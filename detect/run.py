@@ -50,7 +50,7 @@ for k, img in enumerate(images):
                 boxes.append([x, y, w, h])
     indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_threshold)
     output_name = img[:-4] + "_human.txt"
-    print(output_name + " {}/{} ({:.2f}%)".format(k+1, len(images), 100*(k+1)/len(images)))
+    print(output_name + " {}/{} ({:.2f} %)".format(k+1, len(images), 100*(k+1)/len(images)))
     with open(output_name, 'w') as f:
         for i in indices:
             i = i[0]
@@ -59,4 +59,4 @@ for k, img in enumerate(images):
             y = box[1]
             w = box[2]
             h = box[3]
-            f.write("{} {} {} {}\n".format(x, y, w, h))
+            f.write("{} {}\n".format(x+w/2, y+h))
