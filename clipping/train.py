@@ -33,15 +33,12 @@ def create_model():
     model.add(Dropout(0.25))
     model.add(Dense(50, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(1e-3), metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(1e-4), metrics=['accuracy'])
     print("Complete creating model")
     return model
 
 def train(model, all_audio, all_dis_flag):
     train_x, train_y, val_x, val_y = split_data(all_audio, all_dis_flag)
-    print(sum(val_y))
-    print(len(val_y))
-    assert False
     epochs = 500
     callbacks = [
         keras.callbacks.ModelCheckpoint("save_at_{epoch}.h5"),
@@ -51,7 +48,6 @@ def train(model, all_audio, all_dis_flag):
             mode="auto",
         )
     ]
-
 
     model.fit(train_x, train_y, epochs=epochs, callbacks=callbacks, 
         validation_data=(val_x, val_y), shuffle=True)
