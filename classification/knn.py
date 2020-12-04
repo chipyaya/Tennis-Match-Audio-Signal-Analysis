@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
 sys.path.append("..")
 from clipping.audio2mfcc import AudioDataset
 
@@ -34,3 +35,6 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = get_data()
     classifier = KNeighborsClassifier(n_neighbors=5)
     classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))

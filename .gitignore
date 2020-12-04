@@ -5,3 +5,4 @@ archive/video2image/us-open-2019.mp4
 cached
 __pycache__/
 __init__.py
+.vscode
