@@ -1,8 +1,10 @@
 import os
+import pickle
 import librosa
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
+
 
 class AudioDataset(Dataset):
     def __init__(self, audio_dir, label_dir, audio_file):
@@ -52,14 +54,16 @@ def extract_features(f, start, end):
         print(f"{f} failed")
 
 
-
 if __name__ == '__main__':
     audio_dir = '../data/audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
     label_dir = '../data/label/'
 
-
+    datasets = []
     for audio_file in audio_files:
         dataset = AudioDataset(audio_dir, label_dir, audio_file)
-        print(dataset[0]['audio'].shape, dataset[0]['player_flag'], dataset[0]['hand_flag']
-              , dataset[0]['dis_flag'], dataset[0]['serve_flag'])
+        print(audio_file)
+        print(dataset[0]['audio'].shape, dataset[0]['player_flag'],
+            dataset[0]['hand_flag'], dataset[0]['dis_flag'], dataset[0]['serve_flag'])
+        datasets.append(dataset)
+    pickle.dump(datasets, open('../cached/datasets.p', 'wb'))
