@@ -26,7 +26,7 @@ class AudioDataset(Dataset):
         return len(self.audio_labels_list)
 
     def __getitem__(self, idx):
-        audio = extract_features(self.audio_dir+self.audio_file+'_500.wav', self.audio_labels_list[1][idx], self.audio_labels_list[2][idx])
+        audio = extract_features(self.audio_dir+self.audio_file+'.wav', self.audio_labels_list[1][idx], self.audio_labels_list[2][idx])
 
         player_flag = self.audio_labels_list[0][idx]
         hand_flag = self.audio_labels_list[3][idx]
@@ -56,7 +56,7 @@ def extract_features(f, start, end):
 
 
 if __name__ == '__main__':
-    audio_dir = '../data/audio/'
+    audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
     label_dir = '../data/label/'
 
