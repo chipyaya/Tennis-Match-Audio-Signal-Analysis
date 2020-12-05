@@ -41,6 +41,7 @@ def extract_features(f, start, end):
     try:
         start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
         end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
+        #y, sr = librosa.load(f, offset=start, duration=1)
         y, sr = librosa.load(f, offset=start, duration=end-start+1)
         mfcc = librosa.feature.mfcc(y, n_mfcc=13)
         return np.mean(mfcc, axis=1)
