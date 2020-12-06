@@ -11,7 +11,7 @@ MAX_LEN = 130
 
 def parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='original')
+    parser.add_argument('--mode', type=str, default='mfcc-original')
     parser.add_argument('--model_name', type=str, default='CNN')
     args = parser.parse_args()
     return args
@@ -24,22 +24,18 @@ def read_data(load_exist, mode):
     if(load_exist == False):
         all_audio = []
         all_dis_flag = []
-        #TODO: Deal with max len = 173 cases
-        max_len = MAX_LEN
         l_map = {}
         for audio_file in audio_files:
             dataset = AudioDataset(audio_dir, label_dir, audio_file, mode)
             for i in range(len(dataset)):
-                zeros = np.zeros((dataset[i]['audio'].shape[0], max_len-dataset[i]['audio'].shape[1]))
-                all_audio.append(np.concatenate((dataset[i]['audio'], zeros), axis=1))
-                #all_audio.append(dataset[i]['audio'])
-                all_dis_flag.append(dataset[i]['dis_flag'])
-        #         max_len = max(max_len, dataset[i]['audio'].shape[1])
-        #         if dataset[i]['audio'].shape[1] not in l_map:
-        #             l_map[dataset[i]['audio'].shape[1]] = 1
-        #         else:
-        #             l_map[dataset[i]['audio'].shape[1]] += 1
-        # print(l_map)
+                if(MAX_LEN == 130):
+                    zeros = np.zeros((dataset[i]['audio'].shape[0], MAX_LEN-dataset[i]['audio'].shape[1]))
+                    all_audio.append(np.concatenate((dataset[i]['audio'], zeros), axis=1))
+                    all_dis_flag.append(dataset[i]['dis_flag'])
+                elif(MAX_LEN == 173):
+                    all_audio.append(dataset[i]['audio'])
+                    all_dis_flag.append(dataset[i]['dis_flag'])
+
         all_audio = np.asarray(all_audio)
         all_dis_flag = np.asarray(all_dis_flag)
         print("Complete reading data")
@@ -57,7 +53,7 @@ def create_nn_model():
 
 def create_cnn_model():
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(13, MAX_LEN, 1)))
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(MFCC_SIZE, MAX_LEN, 1)))
     model.add(MaxPooling2D((2, 2)))
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(Flatten()) 
@@ -116,6 +112,13 @@ def train_nn(model, all_audio, all_dis_flag, model_name):
     model.evaluate(val_x, val_y)
 
 args = parse()
+if(args.mode == "mfcc-original"):
+    MAX_LEN = 130
+elif(args.mode == "mfcc-delta"):
+    MFCC_SIZE = 26
+    MAX_LEN = 173
+elif(args.mode != "mfcc-avg"):
+    MAX_LEN = 173
 all_audio, all_dis_flag = read_data(False, args.mode)
 if(args.model_name == "CNN"):
     model = create_cnn_model()
