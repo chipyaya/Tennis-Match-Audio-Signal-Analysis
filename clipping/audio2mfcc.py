@@ -1,5 +1,4 @@
 import os
-import pickle
 import librosa
 import argparse
 import textwrap
@@ -39,44 +38,40 @@ class AudioDataset(Dataset):
                 "hand_flag": hand_flag, "dis_flag": dis_flag, "serve_flag": serve_flag}
 
 def extract_features(f, start, end, mode):
-    try:
-        start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
-        end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
-        if mode == 'mfcc-avg' or mode == 'mfcc-original':
-            y, sr = librosa.load(f, offset=start, duration=end-start+1)
-            mfcc = librosa.feature.mfcc(y, n_mfcc=13)
-            if mode == 'mfcc-avg':
-                return np.mean(mfcc, axis=1)
-            else:
-                return mfcc
-        elif mode == 'mfcc' or mode == 'mfcc-delta':
-            d = 2
-            y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
-            mfcc = librosa.feature.mfcc(y, n_mfcc=13)
-            if mode == 'mfcc-delta':
-                delta = librosa.feature.delta(mfcc)
-                return np.vstack([mfcc, delta])
-            else:
-                return mfcc
-        elif mode == 'mel':
-            d = 2
-            y, sr = librosa.load(f, offset=max(0, end - d), duration=2*d)
-            s = librosa.feature.melspectrogram(y, sr=sr)
-            s = librosa.power_to_db(s)
-            s = s.astype(np.float32)
-            return s
-
-    except Exception as e:
-        print(e)
-        print(f"{f} failed")
+    start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
+    end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
+    if mode == 'mfcc-avg' or mode == 'mfcc' or mode == 'mfcc-delta':
+        y, sr = librosa.load(f, offset=start, duration=end-start+1)
+        mfcc = librosa.feature.mfcc(y, n_mfcc=13)
+        if mode == 'mfcc-avg':
+            return np.mean(mfcc, axis=1)
+        elif mode == 'mfcc-delta':
+            delta = librosa.feature.delta(mfcc)
+            return np.vstack([mfcc, delta])
+        else:
+            return mfcc
+    elif mode == 'mel':
+        y, sr = librosa.load(f, offset=start, duration=end-start+1)
+        s = librosa.feature.melspectrogram(y, sr=sr)
+        s = librosa.amplitude_to_db(s)
+        s = s.astype(np.float32)
+        return s
+    elif mode == 'mfcc-4sec':
+        d = 2
+        y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
+        mfcc = librosa.feature.mfcc(y, n_mfcc=13)
+        return mfcc
+    else:
+        raise NotImplementedError
 
 def parse_arg():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
     parser.add_argument('--mode', type=str, default='mfcc-avg',
         help=textwrap.dedent('''\
-        mfcc: use pure mfcc;
-        mfcc-delta: use pure mfcc plus delta features;
+        mfcc: use original mfcc;
         mfcc-avg: taking average of mfcc features;
+        mfcc-4sec: use 4sec mfcc;
+        mfcc-delta: use pure mfcc plus delta features;
         mel: use melspectrogram;''')
     )
     args = parser.parse_args()
@@ -86,7 +81,7 @@ if __name__ == '__main__':
     args = parse_arg()
     audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
-    new_audio_files = ['zverev_thiem-2020']
+    # audio_files_2020 = ['zverev_thiem-2020']
     label_dir = '../data/label/'
 
     datasets = []
@@ -96,5 +91,3 @@ if __name__ == '__main__':
         print(dataset[0]['audio'].shape, dataset[0]['player_flag'],
             dataset[0]['hand_flag'], dataset[0]['dis_flag'], dataset[0]['serve_flag'])
         datasets.append(dataset)
-
-    pickle.dump(datasets, open('../cached/datasets-{}.p'.format(args.mode), 'wb'))
