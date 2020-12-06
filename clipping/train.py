@@ -4,10 +4,18 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Embedding, LSTM, Masking, Conv2D, MaxPooling2D, Flatten
 import numpy as np
 from sklearn.model_selection import train_test_split
+import argparse
 
 MFCC_SIZE = 13
 
-def read_data(load_exist):
+def parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', type=str, default='original')
+    parser.add_argument('--model_name', type=str, default='CNN')
+    args = parser.parse_args()
+    return args
+
+def read_data(load_exist, mode):
     audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
     label_dir = '../data/label/'
@@ -15,18 +23,15 @@ def read_data(load_exist):
     if(load_exist == False):
         all_audio = []
         all_dis_flag = []
-        max_len = 173
+        max_len = 130
         l_map = {}
         for audio_file in audio_files:
-            dataset = AudioDataset(audio_dir, label_dir, audio_file)
+            dataset = AudioDataset(audio_dir, label_dir, audio_file, mode)
             for i in range(len(dataset)):
                 zeros = np.zeros((dataset[i]['audio'].shape[0], max_len-dataset[i]['audio'].shape[1]))
                 all_audio.append(np.concatenate((dataset[i]['audio'], zeros), axis=1))
                 all_dis_flag.append(dataset[i]['dis_flag'])
-                if(dataset[i]['audio'].shape[1] == 173):
-                    print(audio_file, i)
-                    assert False
-                #max_len = max(max_len, dataset[i]['audio'].shape[1])
+                max_len = max(max_len, dataset[i]['audio'].shape[1])
                 if dataset[i]['audio'].shape[1] not in l_map:
                     l_map[dataset[i]['audio'].shape[1]] = 1
                 else:
@@ -49,7 +54,7 @@ def create_nn_model():
 
 def create_cnn_model():
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(13, 130, 1)))
     model.add(MaxPooling2D((2, 2)))
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(Flatten()) 
@@ -75,13 +80,27 @@ def create_rnn_model():
     model.add(Dense(1, activation='sigmoid'))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-def train(model, all_audio, all_dis_flag):
+def train_cnn(model, all_audio, all_dis_flag, model_name):
     train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=1)
-    print(train_x.shape, val_x.shape)
-    assert False
+    train_x = np.expand_dims(train_x, axis=3)
+    val_x = np.expand_dims(val_x, axis=3)
     epochs = 500
     callbacks = [
-        keras.callbacks.ModelCheckpoint("checkpoint/save_at_{epoch}.h5"),
+        keras.callbacks.ModelCheckpoint("checkpoint/cnn_{epoch}.h5", monitor='val_accuracy', save_best_only=True),
+        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True)
+    ]
+
+    model.fit(train_x, train_y, batch_size=4, epochs=epochs, callbacks=callbacks, 
+        validation_data=(val_x, val_y), shuffle=True)
+    print("Guess all 0 on val set accuracy: {:.4f}".format(1-(sum(val_y)/val_y.shape[0])))
+    print("cnn on val set best accuracy:")
+    model.evaluate(val_x, val_y)
+    
+def train_nn(model, all_audio, all_dis_flag, model_name):
+    train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=1)
+    epochs = 500
+    callbacks = [
+        keras.callbacks.ModelCheckpoint("checkpoint/nn_{epoch}.h5", monitor='val_accuracy', save_best_only=True),
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True)
     ]
 
@@ -89,14 +108,15 @@ def train(model, all_audio, all_dis_flag):
         validation_data=(val_x, val_y), shuffle=True)
     model.fit(train_x, train_y, batch_size=4, epochs=epochs, callbacks=callbacks, 
         validation_data=(val_x, val_y), shuffle=True)
-
     print("Guess all 0 on val set accuracy: {:.4f}".format(1-(sum(val_y)/val_y.shape[0])))
-    print("Current on val set best accuracy:")
+    print("nn on val set best accuracy:")
     model.evaluate(val_x, val_y)
-    
 
-#create_rnn_model()
-#assert False
-all_audio, all_dis_flag = read_data(False)
-model = create_cnn_model()
-train(model, all_audio, all_dis_flag)
+args = parse()
+all_audio, all_dis_flag = read_data(False, args.mode)
+if(args.model_name == "CNN"):
+    model = create_cnn_model()
+    train_cnn(model, all_audio, all_dis_flag)
+elif(args.model_name == "NN"):
+    model = create_nn_model()
+    train_nn(model, all_audio, all_dis_flag)

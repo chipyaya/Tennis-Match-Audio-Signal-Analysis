@@ -42,10 +42,13 @@ def extract_features(f, start, end, mode):
     try:
         start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
         end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
-        if mode == 'mfcc-avg':
+        if mode == 'mfcc-avg' or mode == 'mfcc-original':
             y, sr = librosa.load(f, offset=start, duration=end-start+1)
             mfcc = librosa.feature.mfcc(y, n_mfcc=13)
-            return np.mean(mfcc, axis=1)
+            if mode == 'mfcc-avg':
+                return np.mean(mfcc, axis=1)
+            else:
+                return mfcc
         elif mode == 'mfcc' or mode == 'mfcc-delta':
             d = 2
             y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
