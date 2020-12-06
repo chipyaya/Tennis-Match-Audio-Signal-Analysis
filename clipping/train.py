@@ -102,7 +102,7 @@ def train_cnn(model, all_audio, all_dis_flag, model_name):
     model.evaluate(val_x, val_y)
     
 def train_nn(model, all_audio, all_dis_flag, model_name):
-    train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=1)
+    train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=2)
     epochs = 500
     callbacks = [
         keras.callbacks.ModelCheckpoint("checkpoint/nn_{epoch}.h5", monitor='val_accuracy', save_best_only=True),
