@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 import argparse
 
 MFCC_SIZE = 13
+MAX_LEN = 130
 
 def parse():
     parser = argparse.ArgumentParser()
@@ -23,20 +24,22 @@ def read_data(load_exist, mode):
     if(load_exist == False):
         all_audio = []
         all_dis_flag = []
-        max_len = 130
+        #TODO: Deal with max len = 173 cases
+        max_len = MAX_LEN
         l_map = {}
         for audio_file in audio_files:
             dataset = AudioDataset(audio_dir, label_dir, audio_file, mode)
             for i in range(len(dataset)):
                 zeros = np.zeros((dataset[i]['audio'].shape[0], max_len-dataset[i]['audio'].shape[1]))
                 all_audio.append(np.concatenate((dataset[i]['audio'], zeros), axis=1))
+                #all_audio.append(dataset[i]['audio'])
                 all_dis_flag.append(dataset[i]['dis_flag'])
-                max_len = max(max_len, dataset[i]['audio'].shape[1])
-                if dataset[i]['audio'].shape[1] not in l_map:
-                    l_map[dataset[i]['audio'].shape[1]] = 1
-                else:
-                    l_map[dataset[i]['audio'].shape[1]] += 1
-        print(l_map)
+        #         max_len = max(max_len, dataset[i]['audio'].shape[1])
+        #         if dataset[i]['audio'].shape[1] not in l_map:
+        #             l_map[dataset[i]['audio'].shape[1]] = 1
+        #         else:
+        #             l_map[dataset[i]['audio'].shape[1]] += 1
+        # print(l_map)
         all_audio = np.asarray(all_audio)
         all_dis_flag = np.asarray(all_dis_flag)
         print("Complete reading data")
@@ -54,7 +57,7 @@ def create_nn_model():
 
 def create_cnn_model():
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(13, 130, 1)))
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(13, MAX_LEN, 1)))
     model.add(MaxPooling2D((2, 2)))
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(Flatten()) 
@@ -116,7 +119,7 @@ args = parse()
 all_audio, all_dis_flag = read_data(False, args.mode)
 if(args.model_name == "CNN"):
     model = create_cnn_model()
-    train_cnn(model, all_audio, all_dis_flag)
+    train_cnn(model, all_audio, all_dis_flag, args.model_name)
 elif(args.model_name == "NN"):
     model = create_nn_model()
-    train_nn(model, all_audio, all_dis_flag)
+    train_nn(model, all_audio, all_dis_flag, args.model_name)
