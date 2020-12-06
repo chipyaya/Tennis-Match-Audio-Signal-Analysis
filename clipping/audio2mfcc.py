@@ -74,7 +74,8 @@ def parse_arg():
         mfcc: use pure mfcc;
         mfcc-delta: use pure mfcc plus delta features;
         mfcc-avg: taking average of mfcc features;
-        mel: use melspectrogram;'''))
+        mel: use melspectrogram;''')
+    )
     args = parser.parse_args()
     return args
 
@@ -82,6 +83,7 @@ if __name__ == '__main__':
     args = parse_arg()
     audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
+    new_audio_files = ['zverev_thiem-2020']
     label_dir = '../data/label/'
 
     datasets = []
