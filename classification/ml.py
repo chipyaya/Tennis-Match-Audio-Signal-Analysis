@@ -11,6 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.linear_model import RidgeClassifier
 sys.path.append("..")
 from clipping.audio2mfcc import AudioDataset
 
@@ -27,26 +28,44 @@ def parse_arg():
     return args
 
 def load_datasets(mode):
-    datasets = pickle.load(open('../cached/datasets-{}.p'.format(mode), 'rb'))
+    audio_dir = '../data/complete_audio/'
+    audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
+    # audio_files = ['zverev_thiem-2020']
+    label_dir = '../data/label/'
+
+    datasets = []
+    for audio_file in audio_files:
+        dataset = AudioDataset(audio_dir, label_dir, audio_file, args.mode)
+        print(audio_file)
+        datasets.append(dataset)
     print('audio feat: {}'.format(datasets[0][0]['audio'].shape))
     return datasets
 
 def get_data(args):
-    datasets = load_datasets(args.mode)
-    X, y = [], []
-    for dataset in datasets:
-        for i in range(len(dataset)):
-            X.append(dataset[i]['audio'].ravel())
-            y.append(dataset[i][args.target])
-    X = np.array(X)
-    y = np.array(y)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.20, random_state=0)
-    if args.normalize:
-        X_train = normalize(X_train)
-        X_test = normalize(X_test)
-    print('X_train:{}, X_test:{}'.format(X_train.shape, X_test.shape))
-    print('y_train:{}, y_test:{}'.format(y_train.shape, y_test.shape))
+    filename = '../cached/data-{}.p'.format(args.mode)
+    if os.path.exists(filename):
+        print('loading data from cache: {}'.format(filename))
+        [X_train, X_test, y_train, y_test] = pickle.load(
+            open(filename, 'rb'))
+    else:
+        datasets = load_datasets(args.mode)
+        X, y = [], []
+        for dataset in datasets:
+            for i in range(len(dataset)):
+                X.append(dataset[i]['audio'].ravel())
+                y.append(dataset[i][args.target])
+        X = np.array(X)
+        y = np.array(y)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.20, random_state=0)
+        if args.normalize:
+            X_train = normalize(X_train)
+            X_test = normalize(X_test)
+        print('X_train:{}, X_test:{}'.format(X_train.shape, X_test.shape))
+        print('y_train:{}, y_test:{}'.format(y_train.shape, y_test.shape))
+        print('dumping data to cache: {}'.format(filename))
+        pickle.dump([X_train, X_test, y_train, y_test],
+            open(filename, 'wb'))
     return X_train, X_test, y_train, y_test
 
 def normalize(X):
@@ -76,6 +95,8 @@ if __name__ == '__main__':
         classifier = svm.SVC(kernel='linear')
     elif args.classifier == 'svm-poly':
         classifier = svm.SVC(kernel='poly')
+    elif args.classifier == 'ridge':
+        classifier = RidgeClassifier()
     else:
         raise NotImplementedError
     classifier.fit(X_train, y_train)
