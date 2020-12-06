@@ -42,19 +42,26 @@ def extract_features(f, start, end, mode):
     try:
         start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
         end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
-        if mode == 'avg':
+        if mode == 'mfcc-avg':
             y, sr = librosa.load(f, offset=start, duration=end-start+1)
             mfcc = librosa.feature.mfcc(y, n_mfcc=13)
             return np.mean(mfcc, axis=1)
-        elif mode == 'pure' or mode == 'delta':
+        elif mode == 'mfcc' or mode == 'mfcc-delta':
             d = 2
             y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
             mfcc = librosa.feature.mfcc(y, n_mfcc=13)
-            if mode == 'delta':
+            if mode == 'mfcc-delta':
                 delta = librosa.feature.delta(mfcc)
                 return np.vstack([mfcc, delta])
             else:
                 return mfcc
+        elif mode == 'mel':
+            d = 2
+            y, sr = librosa.load(f, offset=max(0, end - d), duration=2*d)
+            s = librosa.feature.melspectrogram(y, sr=sr)
+            s = librosa.power_to_db(s)
+            s = s.astype(np.float32)
+            return s
 
     except Exception as e:
         print(e)
@@ -62,11 +69,12 @@ def extract_features(f, start, end, mode):
 
 def parse_arg():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
-    parser.add_argument('--mode', type=str, default='avg',
+    parser.add_argument('--mode', type=str, default='mfcc-avg',
         help=textwrap.dedent('''\
-        pure: use pure mfcc wo taking average;
-        delta: use pure mfcc plus delta features;
-        avg: taking average of mfcc features'''))
+        mfcc: use pure mfcc;
+        mfcc-delta: use pure mfcc plus delta features;
+        mfcc-avg: taking average of mfcc features;
+        mel: use melspectrogram;'''))
     args = parser.parse_args()
     return args
 
