@@ -11,15 +11,16 @@ MAX_LEN = 130
 
 def parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='mfcc-original')
+    parser.add_argument('--mode', type=str, default='mfcc')
     parser.add_argument('--model_name', type=str, default='CNN')
     args = parser.parse_args()
     return args
 
 def read_data(load_exist, mode):
     audio_dir = '../data/complete_audio/'
-    audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
+    audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov', 'zverev_thiem-2020']
     label_dir = '../data/label/'
+    print("Mode: {}  Model: {}  Data: {}".format(args.mode, args.model_name, audio_files))
 
     if(load_exist == False):
         all_audio = []
@@ -28,14 +29,19 @@ def read_data(load_exist, mode):
         for audio_file in audio_files:
             dataset = AudioDataset(audio_dir, label_dir, audio_file, mode)
             for i in range(len(dataset)):
-                if(MAX_LEN == 130):
+                if(mode == "mfcc" or mode == "mfcc-delta" or mode=="mel"):
                     zeros = np.zeros((dataset[i]['audio'].shape[0], MAX_LEN-dataset[i]['audio'].shape[1]))
                     all_audio.append(np.concatenate((dataset[i]['audio'], zeros), axis=1))
                     all_dis_flag.append(dataset[i]['dis_flag'])
-                elif(MAX_LEN == 173):
+                else:
                     all_audio.append(dataset[i]['audio'])
                     all_dis_flag.append(dataset[i]['dis_flag'])
-
+        #             print(dataset[i]['audio'].shape)
+        #             if dataset[i]['audio'].shape[1] not in l_map:
+        #                 l_map[dataset[i]['audio'].shape[1]] = 1
+        #             else:
+        #                 l_map[dataset[i]['audio'].shape[1]] += 1
+        # print(l_map)
         all_audio = np.asarray(all_audio)
         all_dis_flag = np.asarray(all_dis_flag)
         print("Complete reading data")
@@ -80,7 +86,7 @@ def create_rnn_model():
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 def train_cnn(model, all_audio, all_dis_flag, model_name):
-    train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=1)
+    train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=2)
     train_x = np.expand_dims(train_x, axis=3)
     val_x = np.expand_dims(val_x, axis=3)
     epochs = 500
@@ -112,13 +118,22 @@ def train_nn(model, all_audio, all_dis_flag, model_name):
     model.evaluate(val_x, val_y)
 
 args = parse()
-if(args.mode == "mfcc-original"):
+if(args.mode == "mfcc"):
+    MFCC_SIZE = 13
     MAX_LEN = 130
+elif(args.mode == "mfcc-4sec"):
+    MFCC_SIZE = 13
+    MAX_LEN = 173
 elif(args.mode == "mfcc-delta"):
     MFCC_SIZE = 26
     MAX_LEN = 173
-elif(args.mode != "mfcc-avg"):
-    MAX_LEN = 173
+elif(args.mode == "mfcc-avg"):
+    MFCC_SIZE = 13
+    MAX_LEN = 1
+else:
+    MFCC_SIZE = 128
+    MAX_LEN = 130
+
 all_audio, all_dis_flag = read_data(False, args.mode)
 if(args.model_name == "CNN"):
     model = create_cnn_model()
