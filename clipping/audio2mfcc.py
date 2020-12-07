@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from argparse import RawTextHelpFormatter
+import matplotlib.pyplot as plt
+import librosa.display
 
 
 class AudioDataset(Dataset):
@@ -54,15 +56,37 @@ def extract_features(f, start, end, mode):
         y, sr = librosa.load(f, offset=start, duration=end-start+1)
         s = librosa.feature.melspectrogram(y, sr=sr)
         s = librosa.amplitude_to_db(s)
+        # s = librosa.power_to_db(s)
         s = s.astype(np.float32)
+        # plot_mel_spectrogram(s)
         return s
     elif mode == 'mfcc-4sec':
         d = 2
         y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
         mfcc = librosa.feature.mfcc(y, n_mfcc=13)
+        # plot_mfcc(mfcc)
         return mfcc
     else:
         raise NotImplementedError
+
+def plot_mfcc(mfcc):
+    fig, ax = plt.subplots()
+    img = librosa.display.specshow(mfcc, x_axis='time', ax=ax)
+    fig.colorbar(img, ax=ax)
+    ax.set(title='MFCC (n_mfcc=13)')
+    plt.savefig('../img/mfcc.png')
+    print('saved')
+    input()
+
+def plot_mel_spectrogram(s):
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(s,
+        y_axis='mel', fmax=8000, x_axis='time')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel spectrogram')
+    plt.savefig('../img/mel-spectrogram.png')
+    print('saved')
+    input()
 
 def parse_arg():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)

@@ -5,4 +5,6 @@ archive/video2image/us-open-2019.mp4
 cached
 complete_audio
 __pycache__/
+img/
 .vscode
+*.txt
