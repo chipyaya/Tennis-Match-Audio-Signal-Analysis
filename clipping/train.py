@@ -49,7 +49,7 @@ def read_data(load_exist, mode):
 
 def create_nn_model():
     model = Sequential()
-    model.add(Dense(32, input_dim=MFCC_SIZE, activation='relu'))
+    model.add(Dense(32, activation='relu'))
     model.add(Dropout(0.25))
     model.add(Dense(16, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
@@ -103,13 +103,15 @@ def train_cnn(model, all_audio, all_dis_flag, model_name):
     
 def train_nn(model, all_audio, all_dis_flag, model_name):
     train_x, val_x, train_y, val_y = train_test_split(all_audio, all_dis_flag, test_size=0.2, shuffle= True, random_state=2)
+    train_x = train_x.reshape(140, -1)
+    val_x = val_x.reshape(36, -1)
     epochs = 500
     callbacks = [
         keras.callbacks.ModelCheckpoint("checkpoint/nn_{epoch}.h5", monitor='val_accuracy', save_best_only=True),
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True)
     ]
 
-    model.fit(train_x, train_y, batch_size=4, epochs=500, callbacks=[], 
+    model.fit(train_x, train_y, batch_size=4, epochs=100, callbacks=[], 
         validation_data=(val_x, val_y), shuffle=True)
     model.fit(train_x, train_y, batch_size=4, epochs=epochs, callbacks=callbacks, 
         validation_data=(val_x, val_y), shuffle=True)
