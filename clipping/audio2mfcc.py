@@ -4,10 +4,11 @@ import argparse
 import textwrap
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset
-from argparse import RawTextHelpFormatter
 import matplotlib.pyplot as plt
 import librosa.display
+from torch.utils.data import Dataset
+from argparse import RawTextHelpFormatter
+from spafe.features.lfcc import lfcc
 
 
 class AudioDataset(Dataset):
@@ -66,6 +67,15 @@ def extract_features(f, start, end, mode):
         mfcc = librosa.feature.mfcc(y, n_mfcc=13)
         # plot_mfcc(mfcc)
         return mfcc
+    elif mode == 'lfcc':
+        y, sr = librosa.load(f, offset=start, duration=end-start+1)
+        lfccs  = lfcc(y, num_ceps=13)
+        return np.swapaxes(lfccs, 0, 1)
+    elif mode == 'lfcc-4sec':
+        d = 2
+        y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
+        lfccs  = lfcc(y, num_ceps=13)
+        return np.swapaxes(lfccs, 0, 1)
     else:
         raise NotImplementedError
 
@@ -96,6 +106,8 @@ def parse_arg():
         mfcc-avg: taking average of mfcc features;
         mfcc-4sec: use 4sec mfcc;
         mfcc-delta: use pure mfcc plus delta features;
+        lfcc: use original lfcc;
+        lfcc-4sec: use 4sec lfcc;
         mel: use melspectrogram;''')
     )
     args = parser.parse_args()
