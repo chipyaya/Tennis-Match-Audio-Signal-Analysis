@@ -17,8 +17,7 @@ sys.path.append("..")
 from clipping.audio2mfcc import AudioDataset
 
 
-MAX_LEN = 173
-padding_modes = ['mfcc', 'mfcc-delta', 'mel']
+padding_modes = ['mfcc', 'mfcc-delta', 'mel', 'lfcc']
 
 class Label(Enum):
     player_flag = 0
@@ -43,7 +42,16 @@ def parse_arg():
         mfcc-delta: use pure mfcc plus delta features;
         mel: use melspectrogram;''')
     )
+    parser.add_argument('--maxLen', type=int, default=130)
     args = parser.parse_args()
+    if(args.mode == "mfcc"):
+        args.maxLen = 130
+    elif(args.mode == "mfcc-delta"):
+        args.maxLen = 173
+    elif(args.mode == "mel"):
+        args.maxLen = 173
+    elif(args.mode == "lfcc"):
+        args.maxLen = 411
     return args
 
 def normalization(X):
@@ -81,7 +89,7 @@ def get_data(args):
         for dataset in datasets:
             for i in range(len(dataset)):
                 if args.mode in padding_modes:
-                    zeros = np.zeros((dataset[i]['audio'].shape[0], MAX_LEN - dataset[i]['audio'].shape[1]))
+                    zeros = np.zeros((dataset[i]['audio'].shape[0], args.maxLen - dataset[i]['audio'].shape[1]))
                     feat = np.concatenate((dataset[i]['audio'], zeros), axis=1).ravel()
                 else:
                     feat = dataset[i]['audio'].ravel()
