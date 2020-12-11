@@ -1,8 +1,8 @@
-opencv-python
 tensorflow
 keras
 sklearn
 librosa
 numpy
 pandas
-opencv-wrapper
+spafe
+scikit-learn
