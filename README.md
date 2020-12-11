@@ -1,4 +1,2 @@
 # WN-FPJ-UTCS
-## Clipping
-## Detect
-## Mapping
+Tennis match analysis is a challenging task in real life, with the goal to analyze the tactics or patterns of a player. Due to the lack of data and the small size of tennis ball, it is difficult to keep track of the ball movements using image analysis and computer vision. Thus, in this paper, we propose to analyze the tennis match with audio signals to overcome the limitation. We start from collecting and labeling data from real tennis match recordings, and extract various different features from the audio signals obtained. Moreover, we experiment the features on both traditional machine learning and deep learning models. In our experiments, we quantitatively verify the effectiveness and robustness of the features and models proposed, which produces favorable results and establishes the first successful attempt to handle the task.
