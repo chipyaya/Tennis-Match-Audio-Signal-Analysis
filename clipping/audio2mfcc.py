@@ -43,14 +43,15 @@ class AudioDataset(Dataset):
 def extract_features(f, start, end, mode):
     start = sum(x * int(t) for x, t in zip([60, 1], start.split(":")))
     end = sum(x * int(t) for x, t in zip([60, 1], end.split(":")))
+    d = 2
     if mode == 'mfcc-avg' or mode == 'mfcc' or mode == 'mfcc-delta':
         y, sr = librosa.load(f, offset=start, duration=end-start+1)
-        mfcc = librosa.feature.mfcc(y, n_mfcc=13)
+        mfccs = librosa.feature.mfcc(y, n_mfcc=13)
         if mode == 'mfcc-avg':
-            return np.mean(mfcc, axis=1)
+            return np.mean(mfccs, axis=1)
         elif mode == 'mfcc-delta':
-            delta = librosa.feature.delta(mfcc)
-            return np.vstack([mfcc, delta])
+            delta = librosa.feature.delta(mfccs)
+            return np.vstack([mfccs, delta])
         else:
             return mfcc
     elif mode == 'mel':
@@ -62,20 +63,19 @@ def extract_features(f, start, end, mode):
         # plot_mel_spectrogram(s)
         return s
     elif mode == 'mfcc-4sec':
-        d = 2
         y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
-        mfcc = librosa.feature.mfcc(y, n_mfcc=13)
-        # plot_mfcc(mfcc)
-        return mfcc
-    elif mode == 'lfcc':
-        y, sr = librosa.load(f, offset=start, duration=end-start+1)
-        lfccs  = lfcc(y, num_ceps=13)
-        return np.swapaxes(lfccs, 0, 1)
+        mfccs = librosa.feature.mfcc(y, n_mfcc=13)
+        # plot_mfcc(mfccs)
+        return mfccs
     elif mode == 'lfcc-4sec':
-        d = 2
         y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
-        lfccs  = lfcc(y, num_ceps=13)
-        return np.swapaxes(lfccs, 0, 1)
+        lfccs = np.swapaxes(lfcc(y, fs=50400, num_ceps=13), 0, 1)
+        return lfccs
+    elif mode == 'mfcc-lfcc-4sec':
+        y, sr = librosa.load(f, offset=max(0, end-d), duration=2*d)
+        mfccs = librosa.feature.mfcc(y, n_mfcc=13)
+        lfccs = np.swapaxes(lfcc(y, fs=50400, num_ceps=13), 0, 1)
+        return np.vstack([mfccs, lfccs])
     else:
         raise NotImplementedError
 
@@ -106,8 +106,8 @@ def parse_arg():
         mfcc-avg: taking average of mfcc features;
         mfcc-4sec: use 4sec mfcc;
         mfcc-delta: use pure mfcc plus delta features;
-        lfcc: use original lfcc;
         lfcc-4sec: use 4sec lfcc;
+        mfcc-lfcc-4sec: use 4sec mfcc plus lfcc;
         mel: use melspectrogram;''')
     )
     args = parser.parse_args()

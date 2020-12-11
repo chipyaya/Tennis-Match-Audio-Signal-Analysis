@@ -1,6 +1,6 @@
 declare -a flags=("player_flag" "hand_flag" "dis_flag" "serve_flag")
 declare -a models=("knn" "nb" "rf" "svm-linear" "ridge")
-declare -a modes=("mfcc" "mfcc-avg" "mfcc-delta" "mfcc-4sec" "mel", "lfcc", "lfcc-4sec")
+declare -a modes=("mfcc" "mfcc-4sec" "mfcc-avg" "mfcc-delta" "mel" "lfcc-4sec" "mfcc-lfcc-4sec")
 
 for flag in "${flags[@]}"
 do
