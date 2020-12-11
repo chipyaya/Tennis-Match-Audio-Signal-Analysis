@@ -1,11 +1,13 @@
-from audio2mfcc import AudioDataset
+import sys
+import argparse
+import numpy as np
 from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Embedding, LSTM, Masking, Conv2D, MaxPooling2D, Flatten
-import numpy as np
 from sklearn.model_selection import train_test_split
-import argparse
 from sklearn.metrics import classification_report
+sys.path.append("..")
+from clipping.audio2mfcc import AudioDataset
 
 MFCC_SIZE = 13
 MAX_LEN = 130

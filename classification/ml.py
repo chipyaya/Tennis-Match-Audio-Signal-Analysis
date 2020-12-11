@@ -40,6 +40,8 @@ def parse_arg():
         mfcc-avg: taking average of mfcc features;
         mfcc-4sec: use 4sec mfcc;
         mfcc-delta: use pure mfcc plus delta features;
+        lfcc-4sec: use 4sec lfcc;
+        mfcc-lfcc-4sec: use 4sec mfcc plus lfcc;
         mel: use melspectrogram;''')
     )
     parser.add_argument('--maxLen', type=int, default=130)
@@ -62,7 +64,6 @@ def normalization(X):
 def load_datasets(mode):
     audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
-    # audio_files = ['zverev_thiem-2020']
     label_dir = '../data/label/'
 
     datasets = []
@@ -94,7 +95,6 @@ def get_data(args):
                 else:
                     feat = dataset[i]['audio'].ravel()
                 X.append(feat)
-                # y.append(dataset[i][args.target])
                 y.append([dataset[i][label.name] for label in Label])
         X = np.array(X)
         y = np.array(y)

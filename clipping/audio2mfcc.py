@@ -117,7 +117,6 @@ if __name__ == '__main__':
     args = parse_arg()
     audio_dir = '../data/complete_audio/'
     audio_files = ['berrettini_nadal', 'cilic_nadal', 'federer_dimitrov']
-    # audio_files_2020 = ['zverev_thiem-2020']
     label_dir = '../data/label/'
 
     datasets = []
