@@ -53,7 +53,7 @@ def extract_features(f, start, end, mode):
             delta = librosa.feature.delta(mfccs)
             return np.vstack([mfccs, delta])
         else:
-            return mfcc
+            return mfccs
     elif mode == 'mel':
         y, sr = librosa.load(f, offset=start, duration=end-start+1)
         s = librosa.feature.melspectrogram(y, sr=sr)
